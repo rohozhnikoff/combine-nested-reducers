@@ -2,22 +2,19 @@ import { ActionTypes } from './createStore'
 import isPlainObject from 'lodash/isPlainObject'
 import warning from './utils/warning'
 
-function getUndefinedStateErrorMessage(key, action) {
-    const actionType = action && action.type
-    const actionName = (actionType && `"${actionType.toString()}"`) || 'an action'
+function getUndefinedStateErrorMessage(key, action, path) {
+    var actionType = action && action.type
+    var actionName = actionType && `"${actionType.toString()}"` || 'an action'
+    var fullPath = path !== '' ? path + '.' + key : key
 
     return (
-        `Given action ${actionName}, reducer "${key}" returned undefined. ` +
-        `To ignore an action, you must explicitly return the previous state. ` +
-        `If you want this reducer to hold no value, you can return null instead of undefined.`
+        `Given action ${actionName}, reducer "${fullPath}" returned undefined. ` +
+        `To ignore an action, you must explicitly return the previous state.`
     )
 }
 
-function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, unexpectedKeyCache) {
-    const reducerKeys = Object.keys(reducers)
-    const argumentName = action && action.type === ActionTypes.INIT ?
-        'preloadedState argument passed to createStore' :
-        'previous state received by the reducer'
+function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, unexpectedKeyCache, path) {
+    var reducerKeys = Object.keys(reducers)
 
     if (reducerKeys.length === 0) {
         return (
@@ -25,6 +22,13 @@ function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, une
             'to combineReducers is an object whose values are reducers.'
         )
     }
+    var argumentName = action && action.type === ActionTypes.INIT
+        ? 'preloadedState argument passed to createStore'
+        : 'previous state received by the reducer'
+
+    argumentName += path !== ''
+        ? ', in path ' + path + ', '
+        : path
 
     if (!isPlainObject(inputState)) {
         return (
@@ -35,10 +39,10 @@ function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, une
         )
     }
 
-    const unexpectedKeys = Object.keys(inputState).filter(key =>
+    var unexpectedKeys = Object.keys(inputState).filter(key =>
         !reducers.hasOwnProperty(key) &&
         !unexpectedKeyCache[key]
-)
+    )
 
     unexpectedKeys.forEach(key => {
         unexpectedKeyCache[key] = true
@@ -54,33 +58,33 @@ function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, une
     }
 }
 
-function assertReducerSanity(reducers) {
+function assertReducerSanity(reducers, path) {
     Object.keys(reducers).forEach(key => {
-        const reducer = reducers[key]
-        const initialState = reducer(undefined, { type: ActionTypes.INIT })
+        var reducer = reducers[key]
+        var initialState = reducer(undefined, { type: ActionTypes.INIT })
+        var fullPath = path !== '' ? path + '.' + key : key;
 
         if (typeof initialState === 'undefined') {
-        throw new Error(
-            `Reducer "${key}" returned undefined during initialization. ` +
-            `If the state passed to the reducer is undefined, you must ` +
-            `explicitly return the initial state. The initial state may ` +
-            `not be undefined. If you don't want to set a value for this reducer, ` +
-            `you can use null instead of undefined.`
-        )
-    }
+            throw new Error(
+                `Reducer "${fullPath}" returned undefined during initialization. ` +
+                `If the state passed to the reducer is undefined, you must ` +
+                `explicitly return the initial state. The initial state may ` +
+                `not be undefined.`
+            )
+        }
 
-    const type = '@@redux/PROBE_UNKNOWN_ACTION_' + Math.random().toString(36).substring(7).split('').join('.')
-    if (typeof reducer(undefined, { type }) === 'undefined') {
-        throw new Error(
-            `Reducer "${key}" returned undefined when probed with a random type. ` +
-            `Don't try to handle ${ActionTypes.INIT} or other actions in "redux/*" ` +
-            `namespace. They are considered private. Instead, you must return the ` +
-            `current state for any unknown actions, unless it is undefined, ` +
-            `in which case you must return the initial state, regardless of the ` +
-            `action type. The initial state may not be undefined, but can be null.`
-        )
-    }
-})
+        var type = '@@redux/PROBE_UNKNOWN_ACTION_' + Math.random().toString(36).substring(7).split('').join('.')
+        if (typeof reducer(undefined, { type }) === 'undefined') {
+            throw new Error(
+                `Reducer "${fullPath}" returned undefined when probed with a random type. ` +
+                `Don't try to handle ${ActionTypes.INIT} or other actions in "redux/*" ` +
+                `namespace. They are considered private. Instead, you must return the ` +
+                `current state for any unknown actions, unless it is undefined, ` +
+                `in which case you must return the initial state, regardless of the ` +
+                `action type. The initial state may not be undefined.`
+            )
+        }
+    })
 }
 
 /**
@@ -96,14 +100,16 @@ function assertReducerSanity(reducers) {
  * if the state passed to them was undefined, and the current state for any
  * unrecognized action.
  *
+ * @param {String} path to nested reducers, for fullness error-reporting.
+ *
  * @returns {Function} A reducer function that invokes every reducer inside the
  * passed object, and builds a state object with the same shape.
  */
-export default function combineReducers(reducers) {
-    const reducerKeys = Object.keys(reducers)
-    const finalReducers = {}
-    for (let i = 0; i < reducerKeys.length; i++) {
-        const key = reducerKeys[i]
+export default function combineReducers(reducers, path = '') {
+    var reducerKeys = Object.keys(reducers)
+    var finalReducers = {}
+    for (var i = 0; i < reducerKeys.length; i++) {
+        var key = reducerKeys[i]
 
         if (process.env.NODE_ENV !== 'production') {
             if (typeof reducers[key] === 'undefined') {
@@ -113,18 +119,19 @@ export default function combineReducers(reducers) {
 
         if (typeof reducers[key] === 'function') {
             finalReducers[key] = reducers[key]
+        } else if(isPlainObject(reducers[key])) {
+            finalReducers[key] = combineReducers(reducers[key], path !== '' ? path + '.' + key : key)
         }
     }
-    const finalReducerKeys = Object.keys(finalReducers)
+    var finalReducerKeys = Object.keys(finalReducers)
 
-    let unexpectedKeyCache
     if (process.env.NODE_ENV !== 'production') {
-        unexpectedKeyCache = {}
+        var unexpectedKeyCache = {}
     }
 
-    let sanityError
+    var sanityError
     try {
-        assertReducerSanity(finalReducers)
+        assertReducerSanity(finalReducers, path)
     } catch (e) {
         sanityError = e
     }
@@ -135,21 +142,21 @@ export default function combineReducers(reducers) {
         }
 
         if (process.env.NODE_ENV !== 'production') {
-            const warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache)
+            var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache, path)
             if (warningMessage) {
                 warning(warningMessage)
             }
         }
 
-        let hasChanged = false
-        const nextState = {}
-        for (let i = 0; i < finalReducerKeys.length; i++) {
-            const key = finalReducerKeys[i]
-            const reducer = finalReducers[key]
-            const previousStateForKey = state[key]
-            const nextStateForKey = reducer(previousStateForKey, action)
+        var hasChanged = false
+        var nextState = {}
+        for (var i = 0; i < finalReducerKeys.length; i++) {
+            var key = finalReducerKeys[i]
+            var reducer = finalReducers[key]
+            var previousStateForKey = state[key]
+            var nextStateForKey = reducer(previousStateForKey, action)
             if (typeof nextStateForKey === 'undefined') {
-                const errorMessage = getUndefinedStateErrorMessage(key, action)
+                var errorMessage = getUndefinedStateErrorMessage(key, action, path)
                 throw new Error(errorMessage)
             }
             nextState[key] = nextStateForKey
