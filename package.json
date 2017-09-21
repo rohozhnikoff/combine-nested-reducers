@@ -4,7 +4,10 @@
   "description": "original combineReducers from redux, with ability to create deep scheme of reducers",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
   },
   "repository": {
     "type": "git",
@@ -15,5 +18,15 @@
   "bugs": {
     "url": "https://github.com/rohozhnikoff/combine-nested-reducers/issues"
   },
-  "homepage": "https://github.com/rohozhnikoff/combine-nested-reducers#readme"
+  "homepage": "https://github.com/rohozhnikoff/combine-nested-reducers#readme",
+  "devDependencies": {
+    "react-scripts": "1.0.13"
+  },
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "lodash": "^4.17.4",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "redux": "^3.7.2"
+  }
 }

@@ -1,6 +1,6 @@
-import { ActionTypes } from './createStore'
+import { ActionTypes } from 'redux/src/createStore'
 import isPlainObject from 'lodash/isPlainObject'
-import warning from './utils/warning'
+import warning from 'redux/src/utils/warning'
 
 function getUndefinedStateErrorMessage(key, action, path) {
     var actionType = action && action.type
