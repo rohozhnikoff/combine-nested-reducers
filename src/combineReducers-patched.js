@@ -2,7 +2,7 @@ import { ActionTypes } from 'redux/src/createStore'
 import isPlainObject from 'lodash/isPlainObject'
 import warning from 'redux/src/utils/warning'
 
-function getUndefinedStateErrorMessage(key, action, path) {
+export function getUndefinedStateErrorMessage(key, action, path) {
     var actionType = action && action.type
     var actionName = actionType && `"${actionType.toString()}"` || 'an action'
     var fullPath = path !== '' ? path + '.' + key : key
@@ -119,8 +119,10 @@ export default function combineReducers(reducers, path = '') {
 
         if (typeof reducers[key] === 'function') {
             finalReducers[key] = reducers[key]
-        } else if(isPlainObject(reducers[key])) {
+        } else if (isPlainObject(reducers[key])) {
             finalReducers[key] = combineReducers(reducers[key], path !== '' ? path + '.' + key : key)
+        } else {
+            finalReducers[key] = (state, action) => state === void 0 ? reducers[key] : state
         }
     }
     var finalReducerKeys = Object.keys(finalReducers)
@@ -154,7 +156,7 @@ export default function combineReducers(reducers, path = '') {
             var key = finalReducerKeys[i]
             var reducer = finalReducers[key]
             var previousStateForKey = state[key]
-            var nextStateForKey = reducer(previousStateForKey, action)
+            var nextStateForKey = reducer(previousStateForKey, action, path)
             if (typeof nextStateForKey === 'undefined') {
                 var errorMessage = getUndefinedStateErrorMessage(key, action, path)
                 throw new Error(errorMessage)

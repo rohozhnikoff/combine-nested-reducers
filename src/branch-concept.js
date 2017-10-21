@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 const combineTree = () => ({});
 const Branch = () => ({});
 const Collection = () => ({});
@@ -92,7 +94,7 @@ reducer = () => || [() =>, () =>]
 */
 
 
-const getChildHandledActions => (scheme) {
+const getChildHandledActions = (scheme) => {
 	if (_.isPrimitive(scheme)) {
 		return null
 	} else if (_.isFunction(scheme)) {
