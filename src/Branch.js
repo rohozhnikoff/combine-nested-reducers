@@ -1,8 +1,5 @@
-import combineNestedReducers, {getUndefinedStateErrorMessage} from './combineReducers-patched.js';
-import warning from 'redux/src/utils/warning'
+import combineNestedReducers from './combineReducers-patched.js';
 import _ from 'lodash'
-
-
 
 
 function Branch (children, _handlers, types) {

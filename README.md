@@ -6,14 +6,17 @@ original combineReducers from redux, with ability to create deep scheme of reduc
 
 todo:
 
-[-] поставить базовый энвайромент для хеппи кодинга 
-[-] базово branch -> combineNested
+[+] поставить базовый энвайромент для хеппи кодинга 
+[+] базово branch -> combineNested
+[+] &&
+[+] *
 [-] базово propTypes чекер
-[-] 
-
-
+[-] path everywhere (check)
+[-] scheme should not be change
 
 [-] навесить тесты ? оО
+[-] отлавливание error-s
+[-] вменяемое обьяснение "что случилось"
 
 
 

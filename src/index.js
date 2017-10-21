@@ -16,7 +16,6 @@ const Middleware = applyMiddleware();
 
 const store = createStore(
     Branch({
-
         message: Branch({
             name: 'world',
             age: Branch( 26,
