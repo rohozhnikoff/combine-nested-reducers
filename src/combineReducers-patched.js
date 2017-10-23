@@ -122,7 +122,8 @@ export default function combineReducers(reducers, path = '') {
         } else if (isPlainObject(reducers[key])) {
             finalReducers[key] = combineReducers(reducers[key], path !== '' ? path + '.' + key : key)
         } else {
-            finalReducers[key] = (state, action) => state === void 0 ? reducers[key] : state
+            let innerkey = key;
+            finalReducers[key] = (state, action) => state === void 0 ? reducers[innerkey] : state
         }
     }
     var finalReducerKeys = Object.keys(finalReducers)
